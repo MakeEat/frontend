@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dietary_preferences_screen.dart';
 import 'cuisine_type_screen.dart';
 import '../utils/theme.dart';
 
@@ -13,8 +12,23 @@ class MealTypeScreen extends StatefulWidget {
 class _MealTypeScreenState extends State<MealTypeScreen> {
   String _selectedMealType = '';
   List<String> _selectedCuisines = [];
-  List<String> _dietaryPreferences = [];
-  List<String> _allergies = [];
+
+  void _navigateToCuisineType() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CuisineTypeScreen(
+          selectedCuisines: _selectedCuisines,
+          onCuisinesSelected: (cuisines) {
+            setState(() {
+              _selectedCuisines = cuisines;
+            });
+          },
+          mealType: _selectedMealType,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -100,38 +114,7 @@ class _MealTypeScreenState extends State<MealTypeScreen> {
         setState(() {
           _selectedMealType = title;
         });
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CuisineTypeScreen(
-              selectedCuisines: _selectedCuisines,
-              onCuisinesSelected: (cuisines) {
-                setState(() {
-                  _selectedCuisines = cuisines;
-                });
-                if (cuisines.isNotEmpty) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => DietaryPreferencesScreen(
-                        mealType: _selectedMealType,
-                        cuisineType: cuisines.first,
-                        selectedPreferences: _dietaryPreferences,
-                        selectedAllergies: _allergies,
-                        onPreferencesSelected: (preferences, allergies) {
-                          setState(() {
-                            _dietaryPreferences = preferences;
-                            _allergies = allergies;
-                          });
-                        },
-                      ),
-                    ),
-                  );
-                }
-              },
-            ),
-          ),
-        );
+        _navigateToCuisineType();
       },
       child: Card(
         elevation: 4,

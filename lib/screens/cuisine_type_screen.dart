@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import '../utils/theme.dart';
+import 'dietary_preferences_screen.dart';
 
 class CuisineTypeScreen extends StatefulWidget {
   final List<String> selectedCuisines;
   final Function(List<String>) onCuisinesSelected;
+  final String mealType;
 
   const CuisineTypeScreen({
     super.key,
     required this.selectedCuisines,
     required this.onCuisinesSelected,
+    required this.mealType,
   });
 
   @override
@@ -49,7 +52,7 @@ class _CuisineTypeScreenState extends State<CuisineTypeScreen> {
         backgroundColor: AppColors.primary,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: _saveAndNavigateBack,
+          onPressed: () => Navigator.pop(context),
         ),
       ),
       body: Column(
@@ -107,7 +110,7 @@ class _CuisineTypeScreenState extends State<CuisineTypeScreen> {
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: ElevatedButton(
-            onPressed: _saveAndNavigateBack,
+            onPressed: _saveAndNavigateNext,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
@@ -116,7 +119,7 @@ class _CuisineTypeScreenState extends State<CuisineTypeScreen> {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Text('Save Selections'),
+            child: const Text('Next'),
           ),
         ),
       ),
@@ -132,7 +135,24 @@ class _CuisineTypeScreenState extends State<CuisineTypeScreen> {
         .toList();
   }
 
-  void _saveAndNavigateBack() {
+  void _saveAndNavigateNext() {
     widget.onCuisinesSelected(_selectedCuisines);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DietaryPreferencesScreen(
+          selectedPreferences: const [],
+          mealType: widget.mealType,
+          cuisineType: _selectedCuisines.isNotEmpty ? _selectedCuisines.first : '',
+          onPreferencesSelected: (preferences) {
+            // Handle the selected preferences
+            setState(() {
+              // If you need to store preferences in CuisineTypeScreen
+              // You can add a field to store them
+            });
+          },
+        ),
+      ),
+    );
   }
 }

@@ -1,22 +1,19 @@
 import 'package:flutter/material.dart';
 import '../utils/theme.dart';
 import 'allergies_screen.dart';
-import 'serving_size_screen.dart';
 
 class DietaryPreferencesScreen extends StatefulWidget {
   final List<String> selectedPreferences;
-  final List<String> selectedAllergies;
-  final Function(List<String>, List<String>) onPreferencesSelected;
   final String mealType;
   final String cuisineType;
+  final Function(List<String>) onPreferencesSelected;
 
   const DietaryPreferencesScreen({
     super.key,
     required this.selectedPreferences,
-    required this.selectedAllergies,
-    required this.onPreferencesSelected,
     required this.mealType,
     required this.cuisineType,
+    required this.onPreferencesSelected,
   });
 
   @override
@@ -25,7 +22,6 @@ class DietaryPreferencesScreen extends StatefulWidget {
 
 class _DietaryPreferencesScreenState extends State<DietaryPreferencesScreen> {
   late List<String> _selectedPreferences;
-  late List<String> _selectedAllergies;
 
   final List<String> _dietaryOptions = [
     'Vegetarian',
@@ -45,7 +41,6 @@ class _DietaryPreferencesScreenState extends State<DietaryPreferencesScreen> {
   void initState() {
     super.initState();
     _selectedPreferences = List.from(widget.selectedPreferences);
-    _selectedAllergies = List.from(widget.selectedAllergies);
   }
 
   @override
@@ -59,7 +54,7 @@ class _DietaryPreferencesScreenState extends State<DietaryPreferencesScreen> {
         backgroundColor: AppColors.primary,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: _saveAndNavigateBack,
+          onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SingleChildScrollView(
@@ -80,10 +75,7 @@ class _DietaryPreferencesScreenState extends State<DietaryPreferencesScreen> {
               itemBuilder: (context, index) {
                 final option = _dietaryOptions[index];
                 return CheckboxListTile(
-                  title: Text(
-                    option,
-                    style: AppTextStyles.body,
-                  ),
+                  title: Text(option),
                   value: _selectedPreferences.contains(option),
                   activeColor: AppColors.primary,
                   onChanged: (bool? value) {
@@ -103,43 +95,6 @@ class _DietaryPreferencesScreenState extends State<DietaryPreferencesScreen> {
                 );
               },
             ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: ElevatedButton(
-                onPressed: () => _navigateToAllergies(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 48),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text('Manage Allergies'),
-              ),
-            ),
-            if (_selectedAllergies.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _selectedAllergies.map((allergy) {
-                    return Chip(
-                      label: Text(allergy),
-                      backgroundColor: AppColors.primary.withOpacity(0.1),
-                      labelStyle: const TextStyle(color: AppColors.primary),
-                      deleteIcon: const Icon(Icons.close, size: 18),
-                      onDeleted: () {
-                        setState(() {
-                          _selectedAllergies.remove(allergy);
-                        });
-                      },
-                    );
-                  }).toList(),
-                ),
-              ),
           ],
         ),
       ),
@@ -147,7 +102,7 @@ class _DietaryPreferencesScreenState extends State<DietaryPreferencesScreen> {
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: ElevatedButton(
-            onPressed: _saveAndNavigateBack,
+            onPressed: _navigateToAllergies,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
@@ -156,44 +111,29 @@ class _DietaryPreferencesScreenState extends State<DietaryPreferencesScreen> {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Text('Save Preferences'),
+            child: const Text('Next'),
           ),
         ),
       ),
     );
   }
 
-  void _navigateToAllergies(BuildContext context) async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AllergiesScreen(
-          allergies: _selectedAllergies,
-          onAllergiesSelected: (List<String> allergies) {
-            setState(() {
-              _selectedAllergies = allergies;
-            });
-          },
-        ),
-      ),
-    );
-    if (result != null) {
-      setState(() {
-        _selectedAllergies = result;
-      });
-    }
-  }
-
-  void _saveAndNavigateBack() {
-    widget.onPreferencesSelected(_selectedPreferences, _selectedAllergies);
+  void _navigateToAllergies() {
+    widget.onPreferencesSelected(_selectedPreferences);
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ServingSizeScreen(
+        builder: (context) => AllergiesScreen(
+          allergies: const [],
           mealType: widget.mealType,
           dietaryPreferences: _selectedPreferences,
-          allergies: _selectedAllergies,
           cuisineType: widget.cuisineType,
+          onAllergiesSelected: (allergies) {
+            // Handle allergies selection
+            setState(() {
+              // Store allergies if needed in this screen
+            });
+          },
         ),
       ),
     );
