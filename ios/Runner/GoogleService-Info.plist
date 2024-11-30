@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>623199241339-97p3th0jse86u8ut15gp3plad9g1fa03.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.623199241339-97p3th0jse86u8ut15gp3plad9g1fa03</string>
+	<key>API_KEY</key>
+	<string>AIzaSyDpLLehAbcpkN8MD77DuJvXSdgZujSWqi0</string>
+	<key>GCM_SENDER_ID</key>
+	<string>623199241339</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.love.makeeat</string>
+	<key>PROJECT_ID</key>
+	<string>makeeat-eb60f</string>
+	<key>STORAGE_BUCKET</key>
+	<string>makeeat-eb60f.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:623199241339:ios:501a7b1ba438dbe0e34ede</string>
+</dict>
+</plist>

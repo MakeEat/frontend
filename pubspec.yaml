@@ -1,0 +1,64 @@
+name: makeeat
+description: "A new Flutter project to generate AI-powered recipes."
+# The following line prevents the package from being accidentally published to
+# pub.dev using `flutter pub publish`. This is preferred for private packages.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: ">=3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  provider: ^6.1.2
+  firebase_core: ^3.8.0
+  firebase_auth: ^5.3.3
+  cloud_firestore: ^5.5.0
+  flutter_dotenv: ^5.1.0
+  pie_chart: ^5.4.0
+  http: ^1.1.0
+
+  # Add a package for saving files locally (e.g., the recipe card as PNG)
+  path_provider: ^2.1.1
+  screenshot: ^3.0.0
+
+  # Package for font and style consistency
+  google_fonts: ^4.0.3
+
+  # Add a package for saving images to the gallery
+  image_gallery_saver: ^2.0.3
+  permission_handler: ^11.2.0
+  google_sign_in: ^6.2.2
+  google_sign_in_ios: ^5.7.8
+  google_sign_in_android: ^6.1.33
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  # Add assets section to include the .env file and images for customization
+  assets:
+    - .env
+    - assets/images/
+    - assets/fonts/
+
+  # Add custom fonts for styling
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins-Bold.ttf
+          weight: 700
