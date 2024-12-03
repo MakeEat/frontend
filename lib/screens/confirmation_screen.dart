@@ -27,6 +27,11 @@ class ConfirmationScreen extends StatelessWidget {
 
   Future<void> _generateRecipe(BuildContext context) async {
     try {
+      final apiKey = dotenv.env['OPENAI_API_KEY'];
+      if (apiKey == null || apiKey.isEmpty) {
+        throw Exception('OpenAI API key not found. Please check your .env file.');
+      }
+
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -43,7 +48,7 @@ class ConfirmationScreen extends StatelessWidget {
         Uri.parse('https://api.openai.com/v1/chat/completions'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${dotenv.env['OPENAI_API_KEY']}',
+          'Authorization': 'Bearer $apiKey',
         },
         body: jsonEncode({
           'model': 'gpt-3.5-turbo',

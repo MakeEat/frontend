@@ -1,14 +1,41 @@
 import 'package:flutter/material.dart';
+import 'diet_selection_screen.dart';
 
-class WelcomeSlides extends StatelessWidget {
+class WelcomeSlides extends StatefulWidget {
   const WelcomeSlides({super.key});
+
+  @override
+  State<WelcomeSlides> createState() => _WelcomeSlidesState();
+}
+
+class _WelcomeSlidesState extends State<WelcomeSlides> {
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
+
+  final List<Map<String, String>> _slides = [
+    {
+      'image': 'assets/images/welcomingslide1.png',
+      'title': 'Personalized meal planning',
+      'description': "Pick your week's meals in minutes. With over 200 personalization options, eat exactly how you want to eat.",
+    },
+    {
+      'image': 'assets/images/welcomingslide2.png',
+      'title': 'Simple, stress-free grocery shopping',
+      'description': 'Grocery shop once per week with an organized "done for you" shopping list.',
+    },
+    {
+      'image': 'assets/images/welcomingslide3.png',
+      'title': 'Delicious, healthy meals made easy',
+      'description': 'Easily cook healthy, delicious meals in about 30 minutes, from start to finish.',
+    },
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        width: 430,
-        height: 932,
+        width: double.infinity,
+        height: double.infinity,
         clipBehavior: Clip.antiAlias,
         decoration: ShapeDecoration(
           color: const Color(0xFFFFFAF5),
@@ -18,141 +45,115 @@ class WelcomeSlides extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            // Welcome Image
-            Positioned(
-              left: 48,
-              top: 100,
-              child: Image.asset(
-                'assets/images/welcomingslide1.png',
-                width: 366,
-                height: 366,
-                fit: BoxFit.contain,
-              ),
-            ),
-            
-            // Bottom Navigation Bar
-            Positioned(
-              left: -1,
-              top: 911,
-              child: Container(
-                width: 431,
-                height: 21,
-                padding: const EdgeInsets.symmetric(horizontal: 146),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+            PageView.builder(
+              controller: _pageController,
+              onPageChanged: (int page) {
+                setState(() {
+                  _currentPage = page;
+                });
+              },
+              itemCount: _slides.length,
+              itemBuilder: (context, index) {
+                return Column(
                   children: [
-                    Container(
-                      width: 139,
-                      height: 5,
-                      decoration: ShapeDecoration(
-                        color: const Color(0xFF191919),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(100),
+                    const SizedBox(height: 120),
+                    Image.asset(
+                      _slides[index]['image']!,
+                      width: 280,
+                      height: 280,
+                      fit: BoxFit.contain,
+                    ),
+                    const SizedBox(height: 40),
+                    // Slide Indicators
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        _slides.length,
+                        (i) => Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 6),
+                          width: 10,
+                          height: 10,
+                          decoration: ShapeDecoration(
+                            color: i == _currentPage
+                                ? const Color(0xFFF48600)
+                                : const Color(0xFFE6E6E6),
+                            shape: const OvalBorder(),
+                          ),
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-            
-            // Content
-            const Positioned(
-              left: 32,
-              top: 577,
-              child: SizedBox(
-                width: 367,
-                child: Column(
-                  children: [
-                    Text(
-                      'Personalized meal planning',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Color(0xFF191919),
-                        fontSize: 32,
-                        fontFamily: 'DM Sans',
-                        fontWeight: FontWeight.w700,
-                        height: 1.2,
-                        letterSpacing: -1.60,
-                      ),
-                    ),
-                    SizedBox(height: 12),
-                    Text(
-                      "Pick your week's meals in minutes. With over 200 personalization options, eat exactly how you want to eat.",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Color(0xFF666666),
-                        fontSize: 18,
-                        fontFamily: 'DM Sans',
-                        fontWeight: FontWeight.w400,
-                        height: 1.5,
+                    const SizedBox(height: 30),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        children: [
+                          Text(
+                            _slides[index]['title']!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Color(0xFF191919),
+                              fontSize: 24,
+                              fontFamily: 'DM Sans',
+                              fontWeight: FontWeight.w700,
+                              height: 1.2,
+                              letterSpacing: -1.20,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            _slides[index]['description']!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Color(0xFF666666),
+                              fontSize: 16,
+                              fontFamily: 'DM Sans',
+                              fontWeight: FontWeight.w400,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
-                ),
-              ),
+                );
+              },
             ),
-            
-            // Slide Indicators
-            Positioned(
-              left: 182,
-              top: 514,
-              child: Row(
-                children: [
-                  Container(
-                    width: 14,
-                    height: 14,
-                    decoration: const ShapeDecoration(
-                      color: Color(0xFFF48600),
-                      shape: OvalBorder(),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Container(
-                    width: 14,
-                    height: 14,
-                    decoration: const ShapeDecoration(
-                      color: Color(0xFFE6E6E6),
-                      shape: OvalBorder(),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Container(
-                    width: 14,
-                    height: 14,
-                    decoration: const ShapeDecoration(
-                      color: Color(0xFFE6E6E6),
-                      shape: OvalBorder(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
             // Continue Button
             Positioned(
-              left: 17,
-              top: 789,
+              left: 16,
+              right: 16,
+              bottom: 80,
               child: GestureDetector(
                 onTap: () {
-                  // Navigate to next slide or home screen
+                  if (_currentPage < _slides.length - 1) {
+                    _pageController.nextPage(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                  } else {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const DietSelectionScreen(),
+                      ),
+                    );
+                  }
                 },
                 child: Container(
-                  width: 397,
-                  height: 57,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  height: 50,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   decoration: ShapeDecoration(
                     color: const Color(0xFFF48600),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Text(
-                      'Continue',
-                      style: TextStyle(
-                        color: Color(0xFF191919),
-                        fontSize: 18,
+                      _currentPage == _slides.length - 1 ? 'Get Started' : 'Continue',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
                         fontFamily: 'DM Sans',
                         fontWeight: FontWeight.w700,
                       ),
@@ -161,22 +162,19 @@ class WelcomeSlides extends StatelessWidget {
                 ),
               ),
             ),
-            
             // Skip Button
             Positioned(
-              left: 197,
-              top: 862,
+              left: 0,
+              right: 0,
+              bottom: 32,
               child: GestureDetector(
-                onTap: () {
-                  // Navigate to home screen
-                  Navigator.of(context).pushReplacementNamed('/home');
-                },
+                onTap: () => Navigator.pushReplacementNamed(context, '/home'),
                 child: const Text(
                   'Skip',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Color(0xFF191919),
-                    fontSize: 18,
+                    fontSize: 16,
                     fontFamily: 'DM Sans',
                     fontWeight: FontWeight.w500,
                   ),

@@ -1,2 +1,7 @@
 #include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"
 #include "Generated.xcconfig"
+
+ENABLE_BITCODE=NO
+ONLY_ACTIVE_ARCH=YES
+SWIFT_OPTIMIZATION_LEVEL=-Onone
+GCC_OPTIMIZATION_LEVEL=0

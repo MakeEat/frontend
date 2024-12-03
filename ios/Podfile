@@ -3,7 +3,12 @@ source 'https://cdn.cocoapods.org/'
 # Uncomment this line to define a global platform for your project
 platform :ios, '13.0'
 
-# CocoaPods analytics sends network stats synchronously affecting flutter build latency.
+# Add these optimization flags
+install! 'cocoapods', 
+  :deterministic_uuids => false,
+  :disable_input_output_paths => true
+
+# Speed up build time
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
 project 'Runner', {
@@ -34,16 +39,27 @@ target 'Runner' do
   use_modular_headers!
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
-end
 
-post_install do |installer|
-  installer.pods_project.targets.each do |target|
-    flutter_additional_ios_build_settings(target)
-    target.build_configurations.each do |config|
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+  # Add these post-install hooks
+  post_install do |installer|
+    installer.pods_project.targets.each do |target|
+      flutter_additional_ios_build_settings(target)
       
-      # Add ARM64 exclusion for simulators if needed
-      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+      target.build_configurations.each do |config|
+        # Speed up build time
+        config.build_settings['ENABLE_BITCODE'] = 'NO'
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+        
+        # Optimization flags
+        config.build_settings['GCC_OPTIMIZATION_LEVEL'] = '0' # for development
+        config.build_settings['SWIFT_OPTIMIZATION_LEVEL'] = '-Onone' # for development
+        config.build_settings['ONLY_ACTIVE_ARCH'] = 'YES'
+        config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
+        
+        # Add header search paths for GoogleUtilities
+        config.build_settings['HEADER_SEARCH_PATHS'] ||= '$(inherited) '
+        config.build_settings['HEADER_SEARCH_PATHS'] += '${PODS_ROOT}/GoogleUtilities/GoogleUtilities/**'
+      end
     end
   end
 end

@@ -1,12 +1,12 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:google_sign_in_platform_interface/google_sign_in_platform_interface.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 
 class AuthService extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   User? get currentUser => _auth.currentUser;
 
   Future<(bool, String)> signInWithEmailAndPassword(String email, String password) async {
@@ -65,58 +65,41 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  Future<(bool, String)> signUpWithEmailAndPassword(String email, String password) async {
+  Future<(bool, String)> signUp({
+    required String email,
+    required String password,
+    required String name,
+  }) async {
     try {
-      debugPrint('\n=== SIGNUP PROCESS STARTED ===');
-      debugPrint('Attempting signup for: $email');
-      debugPrint('Password length: ${password.length}');
-
-      debugPrint('Firebase Auth instance exists');
-      debugPrint('Creating user account...');
-
-      // Create user
-      final UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-        email: email.trim(),
-        password: password.trim(),
+      final userCredential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
       );
 
-      debugPrint('Received response from Firebase');
-      final User? user = userCredential.user;
-      
-      if (user != null) {
-        debugPrint('SUCCESS: User created');
-        debugPrint('User ID: ${user.uid}');
-        debugPrint('Email: ${user.email}');
-        notifyListeners();
-        return (true, 'Account created successfully');
-      } else {
-        debugPrint('ERROR: User is null after creation');
-        return (false, 'Failed to create user account');
+      try {
+        await _firestore.collection('users').doc(userCredential.user!.uid).set({
+          'name': name,
+          'email': email,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      } catch (firestoreError) {
+        debugPrint('Firestore error: $firestoreError');
       }
 
+      notifyListeners();
+      return (true, 'Success');
     } on FirebaseAuthException catch (e) {
-      debugPrint('\n=== FIREBASE AUTH ERROR ===');
-      debugPrint('Error Code: ${e.code}');
-      debugPrint('Error Message: ${e.message}');
-      debugPrint('Full Error: $e');
-      
-      switch (e.code) {
-        case 'email-already-in-use':
-          return (false, 'This email is already registered');
-        case 'invalid-email':
-          return (false, 'Invalid email format');
-        case 'operation-not-allowed':
-          return (false, 'Email/password signup is not enabled in Firebase Console');
-        case 'weak-password':
-          return (false, 'Password should be at least 6 characters');
-        default:
-          return (false, 'Error: ${e.message}');
+      String message = 'An error occurred during signup';
+      if (e.code == 'weak-password') {
+        message = 'The password provided is too weak';
+      } else if (e.code == 'email-already-in-use') {
+        message = 'An account already exists for that email';
+      } else if (e.code == 'invalid-email') {
+        message = 'The email address is not valid';
       }
+      return (false, message);
     } catch (e) {
-      debugPrint('\n=== UNEXPECTED ERROR ===');
-      debugPrint('Error Type: ${e.runtimeType}');
-      debugPrint('Error Details: $e');
-      return (false, 'An unexpected error occurred');
+      return (false, e.toString());
     }
   }
 
@@ -142,7 +125,7 @@ class AuthService extends ChangeNotifier {
     } else {
       // Existing mobile implementation
       try {
-        final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+        final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
         
         if (googleUser == null) {
           return (false, 'Google Sign In was cancelled');
@@ -168,8 +151,12 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
-    await _auth.signOut();
-    await _googleSignIn.signOut();
-    notifyListeners();
+    try {
+      await _auth.signOut();
+      await _googleSignIn.signOut();  // Sign out from Google if used
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error signing out: $e');
+    }
   }
 } 
