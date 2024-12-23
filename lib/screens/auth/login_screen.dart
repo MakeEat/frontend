@@ -350,7 +350,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (context.mounted) {
         if (success) {
           // Generate FCM token after successful login
-          final notificationService = NotificationService();
+          final notificationService = Provider.of<NotificationService>(context, listen: false);
           await notificationService.getFCMToken();
           _navigateToHome(context);
         } else {

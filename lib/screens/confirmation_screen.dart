@@ -4,8 +4,10 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'recipe_display_screen.dart';
 import '../models/recipe.dart';
+import 'package:provider/provider.dart';
+import '../services/preferences_service.dart';
 
-class ConfirmationScreen extends StatelessWidget {
+class ConfirmationScreen extends StatefulWidget {
   final String mealType;
   final List<String> dietaryPreferences;
   final List<String> allergies;
@@ -25,65 +27,123 @@ class ConfirmationScreen extends StatelessWidget {
     required this.targetCalories,
   });
 
+  @override
+  State<ConfirmationScreen> createState() => _ConfirmationScreenState();
+}
+
+class _ConfirmationScreenState extends State<ConfirmationScreen> with SingleTickerProviderStateMixin {
+  late List<String> combinedAllergies;
+  late List<String> combinedPreferences;
+  late List<String> excludedIngredients;
+  bool isLoading = false;
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _rotationAnimation;
+  
+  @override
+  void initState() {
+    super.initState();
+    _loadUserPreferences();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.2,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
+
+    _rotationAnimation = Tween<double>(
+      begin: 0,
+      end: 0.1,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadUserPreferences() async {
+    final prefsService = Provider.of<PreferencesService>(context, listen: false);
+    
+    // Get saved preferences
+    final savedDiet = prefsService.getDiet();
+    final savedAllergies = prefsService.getAllergies();
+    final savedDislikes = prefsService.getDislikes();
+    
+    setState(() {
+      // Remove duplicates from allergies
+      combinedAllergies = {...widget.allergies, ...savedAllergies}.toList();
+      
+      // Remove duplicates from dietary preferences
+      Set<String> prefsSet = {...widget.dietaryPreferences};
+      if (savedDiet != null && savedDiet != 'Classic') {
+        prefsSet.add(savedDiet);
+      }
+      combinedPreferences = prefsSet.toList();
+      
+      // Add disliked ingredients to excluded ingredients
+      excludedIngredients = savedDislikes;
+    });
+  }
+
   Future<void> _generateRecipe(BuildContext context) async {
     try {
-      final apiKey = dotenv.env['OPENAI_API_KEY'];
-      if (apiKey == null || apiKey.isEmpty) {
-        throw Exception('OpenAI API key not found. Please check your .env file.');
-      }
-
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return const Center(
-            child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF7F6F)),
-            ),
-          );
-        },
-      );
+      setState(() => isLoading = true);
+      
+      // Take only first 2 items from each list to reduce token count
+      final limitedPreferences = combinedPreferences.take(2).toList();
+      final limitedAllergies = combinedAllergies.take(2).toList();
 
       final response = await http.post(
-        Uri.parse('https://api.openai.com/v1/chat/completions'),
+        Uri.parse('http://54.173.54.132:8010/api/recipe/generate'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $apiKey',
+          'Authorization': 'Bearer 9357',
         },
         body: jsonEncode({
-          'model': 'gpt-3.5-turbo',
-          'messages': [
-            {
-              'role': 'user',
-              'content': _buildPrompt(),
-            }
-          ],
-          'temperature': 0.7,
+          'meal_type': widget.mealType,
+          'cuisine_type': widget.cuisineType,
+          'dietary_restrictions': limitedPreferences, // Use combined preferences
+          'allergies': limitedAllergies, // Use combined allergies
+          'servings': int.parse(widget.servingSize),
+          'calorie_limit': widget.targetCalories,
+          'ingredients': widget.ingredients,
+          'additional_preferences': {
+            'dislikes': excludedIngredients, // Use excluded ingredients
+          },
         }),
       );
 
-      if (!context.mounted) return;
-      Navigator.pop(context); // Remove loading dialog
-
-      if (response.statusCode == 200) {
+      if (!mounted) return;
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {  // Accept both 200 and 201
         final data = jsonDecode(response.body);
-        final recipeContent = data['choices'][0]['message']['content'];
         
-        // Parse the string content into a Map
-        final recipeJson = jsonDecode(recipeContent);
+        // The recipe data is directly in the response, no need to parse message content
+        final recipeData = data['data'];
         
-        if (context.mounted) {
+        if (mounted) {
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => RecipeDisplayScreen(
-                recipe: Recipe.fromJson(recipeJson),
+                recipe: Recipe.fromJson(recipeData),
               ),
             ),
           );
         }
       } else {
-        if (context.mounted) {
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error: ${response.statusCode} - ${response.body}'),
@@ -93,30 +153,24 @@ class ConfirmationScreen extends StatelessWidget {
         }
       }
     } catch (e) {
-      if (context.mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
-          ),
-        );
-      }
-      print('Error in _generateRecipe: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to generate recipe. Please try again.')),
+      );
     }
   }
 
   String _buildPrompt() {
     return '''
     Generate a recipe with the following requirements:
-    - Meal Type: $mealType
-    - Dietary Preferences: ${dietaryPreferences.join(', ')}
-    - Allergies to avoid: ${allergies.join(', ')}
-    - Cuisine Type: $cuisineType
-    - Serving Size: $servingSize people
-    - Target Calories: $targetCalories
-    - Required Ingredients: ${ingredients.join(', ')}
+    - Meal Type: ${widget.mealType}
+    - Dietary Preferences: ${combinedPreferences.join(', ')}
+    - Allergies to avoid: ${combinedAllergies.join(', ')}
+    - Ingredients to exclude: ${excludedIngredients.join(', ')}
+    - Cuisine Type: ${widget.cuisineType}
+    - Serving Size: ${widget.servingSize} people
+    - Target Calories: ${widget.targetCalories}
+    - Required Ingredients: ${widget.ingredients.join(', ')}
     
     Please provide the recipe in JSON format with the following structure:
     {
@@ -142,140 +196,224 @@ class ConfirmationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Confirm Recipe Details',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 24,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        clipBehavior: Clip.antiAlias,
+        decoration: ShapeDecoration(
+          color: const Color(0xFFFFFAF5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
           ),
         ),
-        backgroundColor: const Color(0xFFFF7F6F),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildSection('Meal Type', mealType),
-              _buildSection(
-                'Dietary Preferences',
-                dietaryPreferences.isEmpty ? 'None' : dietaryPreferences.join(', '),
+        child: Stack(
+          children: [
+            // Back Button
+            Positioned(
+              left: 16,
+              top: 54,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  if (context.mounted) {
+                    Navigator.of(context).pop();
+                  }
+                },
               ),
-              _buildSection(
-                'Allergies',
-                allergies.isEmpty ? 'None' : allergies.join(', '),
+            ),
+
+            // Main Content
+            SingleChildScrollView(
+              padding: const EdgeInsets.only(
+                top: 120,
+                left: 16,
+                right: 16,
+                bottom: 120,
               ),
-              _buildSection('Cuisine Type', cuisineType),
-              _buildSection('Serving Size', servingSize),
-              _buildIngredientsList(),
-              _buildSection('Target Calories', targetCalories.toString()),
-              const SizedBox(height: 30),
-              Center(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Confirm Recipe Details',
+                    style: TextStyle(
+                      color: Color(0xFF191919),
+                      fontSize: 32,
+                      fontFamily: 'DM Sans',
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -1.60,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  _buildSection('Meal Type', widget.mealType),
+                  _buildSection(
+                    'Dietary Preferences',
+                    combinedPreferences.isEmpty ? 'None' : combinedPreferences.join(', '),
+                  ),
+                  _buildSection(
+                    'Allergies',
+                    combinedAllergies.isEmpty ? 'None' : combinedAllergies.join(', '),
+                  ),
+                  _buildSection('Cuisine Type', widget.cuisineType),
+                  _buildSection('Serving Size', widget.servingSize),
+                  _buildIngredientsList(),
+                  _buildSection('Target Calories', widget.targetCalories.toString()),
+                ],
+              ),
+            ),
+
+            // Generate Recipe Button
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 40,
+              child: SizedBox(
+                height: 57,
+                width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () => _generateRecipe(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF7F6F),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 40,
-                      vertical: 15,
-                    ),
+                    backgroundColor: const Color(0xFFF48600),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
+                      borderRadius: BorderRadius.circular(16),
                     ),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                   child: const Text(
                     'Generate Recipe',
                     style: TextStyle(
+                      color: Color(0xFF191919),
                       fontSize: 18,
-                      fontWeight: FontWeight.w500,
+                      fontFamily: 'DM Sans',
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
-            ],
-          ),
+            ),
+
+            if (isLoading) _buildLoadingOverlay(),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildSection(String title, String content) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: Color(0xFF191919),
+              fontSize: 18,
+              fontFamily: 'DM Sans',
+              fontWeight: FontWeight.w700,
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          content,
-          style: const TextStyle(
-            fontSize: 16,
-            color: Colors.black54,
+          const SizedBox(height: 8),
+          Text(
+            content,
+            style: const TextStyle(
+              color: Color(0xFF666666),
+              fontSize: 16,
+              fontFamily: 'DM Sans',
+              fontWeight: FontWeight.w400,
+            ),
           ),
-        ),
-        const Divider(
-          height: 32,
-          thickness: 1,
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildIngredientsList() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Ingredients',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Ingredients',
+            style: TextStyle(
+              color: Color(0xFF191919),
+              fontSize: 18,
+              fontFamily: 'DM Sans',
+              fontWeight: FontWeight.w700,
+            ),
           ),
-        ),
-        const SizedBox(height: 12),
-        ...ingredients.map((ingredient) => Padding(
-          padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
-          child: Row(
-            children: [
-              Container(
-                width: 6,
-                height: 6,
-                decoration: const BoxDecoration(
-                  color: Colors.black54,
-                  shape: BoxShape.circle,
+          const SizedBox(height: 12),
+          ...widget.ingredients.map((ingredient) => Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Row(
+              children: [
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF666666),
+                    shape: BoxShape.circle,
+                  ),
                 ),
+                const SizedBox(width: 12),
+                Text(
+                  ingredient,
+                  style: const TextStyle(
+                    color: Color(0xFF666666),
+                    fontSize: 16,
+                    fontFamily: 'DM Sans',
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingOverlay() {
+    return AnimatedOpacity(
+      opacity: isLoading ? 1.0 : 0.0,
+      duration: const Duration(milliseconds: 300),
+      child: Container(
+        color: Colors.black54,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedBuilder(
+                animation: _animationController,
+                builder: (context, child) {
+                  return Transform.scale(
+                    scale: _scaleAnimation.value,
+                    child: Transform.rotate(
+                      angle: _rotationAnimation.value,
+                      child: Image.asset(
+                        'assets/images/makeeat_logo.png',
+                        width: 100,
+                        height: 100,
+                      ),
+                    ),
+                  );
+                },
               ),
-              const SizedBox(width: 12),
-              Text(
-                ingredient,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.black54,
+              const SizedBox(height: 20),
+              const Text(
+                'Cooking up your recipe...',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontFamily: 'DM Sans',
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],
           ),
-        )),
-        const Divider(
-          height: 32,
-          thickness: 1,
         ),
-      ],
+      ),
     );
   }
 }

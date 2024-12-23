@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../utils/theme.dart';
 import 'ingredients_screen.dart';
 
 class CalorieSettingsScreen extends StatefulWidget {
@@ -41,88 +40,178 @@ class _CalorieSettingsScreenState extends State<CalorieSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Set Target Calories',
-          style: TextStyle(color: Colors.white),
+      body: Container(
+        width: 430,
+        height: 932,
+        clipBehavior: Clip.antiAlias,
+        decoration: ShapeDecoration(
+          color: const Color(0xFFFFFAF5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
         ),
-        backgroundColor: AppColors.primary,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
           children: [
-            const Text(
-              'Enter Target Calories',
-              style: AppTextStyles.heading,
+            // Back Button
+            Positioned(
+              left: 16,
+              top: 54,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.pop(context),
+              ),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _caloriesController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                hintText: 'Enter calories',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(8)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(8)),
-                  borderSide: BorderSide(color: AppColors.primary),
+            
+            // Progress Indicator
+            Positioned(
+              left: 16,
+              top: 94,
+              child: SizedBox(
+                width: 398,
+                child: Row(
+                  children: List.generate(5, (index) {
+                    return Expanded(
+                      child: Container(
+                        height: 12,
+                        margin: EdgeInsets.only(right: index < 4 ? 6 : 0),
+                        decoration: ShapeDecoration(
+                          color: index < 5
+                              ? const Color(0xFF33985B)
+                              : const Color(0xFFE6E6E6),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
                 ),
               ),
             ),
-            const SizedBox(height: 24),
-            const Text(
-              'Preset Options',
-              style: AppTextStyles.heading,
+
+            // Main Content
+            Positioned(
+              left: 16,
+              top: 130,
+              right: 16,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Set target calories',
+                    style: TextStyle(
+                      color: Color(0xFF191919),
+                      fontSize: 32,
+                      fontFamily: 'DM Sans',
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -1.60,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  // Custom Calorie Input
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: ShapeDecoration(
+                      color: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        side: const BorderSide(color: Color(0xFFCCCCCC)),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: TextField(
+                      controller: _caloriesController,
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontFamily: 'DM Sans',
+                        color: Color(0xFF191919),
+                      ),
+                      decoration: const InputDecoration(
+                        hintText: 'Enter calories',
+                        border: InputBorder.none,
+                        hintStyle: TextStyle(
+                          color: Color(0xFF666666),
+                          fontSize: 18,
+                          fontFamily: 'DM Sans',
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  // Preset Options
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: _presetCalories.map((calories) {
+                      final isSelected = _caloriesController.text == calories.toString();
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _caloriesController.text = calories.toString();
+                          });
+                        },
+                        child: Container(
+                          width: 107,
+                          height: 57,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          decoration: ShapeDecoration(
+                            color: isSelected ? const Color(0xFFFFE3C1) : Colors.white,
+                            shape: RoundedRectangleBorder(
+                              side: BorderSide(
+                                width: 1,
+                                color: isSelected ? const Color(0xFFF48600) : const Color(0xFFCCCCCC),
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: Center(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                '$calories cal',
+                                style: TextStyle(
+                                  color: const Color(0xFF191919),
+                                  fontSize: 18,
+                                  fontFamily: 'DM Sans',
+                                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _presetCalories.map((calories) {
-                return ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _caloriesController.text = calories.toString();
-                    });
-                  },
+
+            // Continue Button
+            Positioned(
+              left: 17,
+              bottom: 40,
+              child: SizedBox(
+                width: 397,
+                height: 57,
+                child: ElevatedButton(
+                  onPressed: _saveAndNavigateToNext,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
+                    backgroundColor: const Color(0xFFF48600),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: const Text(
+                    'Continue',
+                    style: TextStyle(
+                      color: Color(0xFF191919),
+                      fontSize: 18,
+                      fontFamily: 'DM Sans',
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  child: Text('$calories cal'),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _saveAndNavigateToNext,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  'Next',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -133,8 +222,11 @@ class _CalorieSettingsScreenState extends State<CalorieSettingsScreen> {
   }
 
   void _saveAndNavigateToNext() {
-    final calories = int.tryParse(_caloriesController.text) ?? 0;
-    if (calories > 0) {
+    final totalCalories = int.tryParse(_caloriesController.text) ?? 0;
+    final servingSize = int.tryParse(widget.servingSize) ?? 1;
+    final caloriesPerServing = totalCalories ~/ servingSize; // Integer division
+
+    if (caloriesPerServing > 0) {
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -144,7 +236,7 @@ class _CalorieSettingsScreenState extends State<CalorieSettingsScreen> {
             allergies: widget.allergies,
             cuisineType: widget.cuisineType,
             servingSize: widget.servingSize,
-            targetCalories: calories,
+            targetCalories: caloriesPerServing,
           ),
         ),
       );

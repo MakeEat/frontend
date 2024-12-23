@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../utils/theme.dart';
 import 'confirmation_screen.dart';
+import 'camera_capture_screen.dart';
 
 class IngredientsScreen extends StatefulWidget {
   final String mealType;
@@ -9,6 +9,7 @@ class IngredientsScreen extends StatefulWidget {
   final String cuisineType;
   final String servingSize;
   final int targetCalories;
+  final List<String>? existingIngredients;
 
   const IngredientsScreen({
     super.key,
@@ -18,6 +19,7 @@ class IngredientsScreen extends StatefulWidget {
     required this.cuisineType,
     required this.servingSize,
     required this.targetCalories,
+    this.existingIngredients,
   });
 
   @override
@@ -25,13 +27,8 @@ class IngredientsScreen extends StatefulWidget {
 }
 
 class _IngredientsScreenState extends State<IngredientsScreen> {
-  String mealType = '';
-  List<String> dietaryPreferences = [];
-  List<String> allergies = [];
-  String cuisineType = '';
-  String servingSize = '';
-  List<String> ingredients = [];
-  int targetCalories = 0;
+  static const int maxIngredients = 3;
+  late List<String> ingredients;
   final TextEditingController ingredientController = TextEditingController();
   final FocusNode ingredientFocusNode = FocusNode();
   bool isLoading = false;
@@ -39,156 +36,224 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
   @override
   void initState() {
     super.initState();
-    mealType = widget.mealType;
-    dietaryPreferences = widget.dietaryPreferences;
-    allergies = widget.allergies;
-    cuisineType = widget.cuisineType;
-    servingSize = widget.servingSize;
-    targetCalories = widget.targetCalories;
+    ingredients = widget.existingIngredients?.toList() ?? [];
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          "Ingredients",
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: AppColors.primary,
-      ),
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFFFAFAFA), Color(0xFFFFF4ED)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
+            colors: [Color(0xFFFFFAF5), Color(0xFFFFE3C1)],
           ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              const Text(
-                "What ingredients do you have?",
-                style: AppTextStyles.heading,
-                textAlign: TextAlign.center,
+        child: Stack(
+          children: [
+            // Back Button
+            Positioned(
+              left: 16,
+              top: 54,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.pop(context),
               ),
-              const SizedBox(height: 8),
-              Text(
-                "Add ingredients you'd like to use",
-                style: AppTextStyles.body.copyWith(
-                  color: Colors.grey[600],
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: ingredientController,
-                      focusNode: ingredientFocusNode,
-                      decoration: const InputDecoration(
-                        hintText: "Enter an ingredient",
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(12)),
-                          borderSide: BorderSide(color: AppColors.primary),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(12)),
-                          borderSide: BorderSide(
-                            color: AppColors.primary,
-                            width: 2,
-                          ),
-                        ),
-                      ),
-                      onSubmitted: (value) => _addIngredient(value),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    onPressed: () => _addIngredient(ingredientController.text),
-                    icon: const Icon(Icons.add_circle),
-                    color: AppColors.primary,
-                    iconSize: 32,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: ingredients.isEmpty
-                    ? Center(
-                        child: Text(
-                          "Add some ingredients to get started!",
-                          style: AppTextStyles.body.copyWith(
-                            color: Colors.grey[600],
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      )
-                    : ListView.builder(
-                        itemCount: ingredients.length,
-                        itemBuilder: (context, index) {
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            shape: const RoundedRectangleBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(12)),
-                            ),
-                            child: ListTile(
-                              title: Text(
-                                ingredients[index],
-                                style: AppTextStyles.body,
-                              ),
-                              trailing: IconButton(
-                                icon: const Icon(Icons.remove_circle_outline),
-                                color: Colors.red,
-                                onPressed: () => _removeIngredient(index),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.arrow_back),
-                      label: const Text("Back"),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.primary,
-                        side: const BorderSide(color: AppColors.primary),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+
+            // Main Content
+            Positioned(
+              left: 16,
+              top: 130,
+              right: 16,
+              bottom: 100,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Final touch:\nWhat ingredients do you have?',
+                      style: TextStyle(
+                        color: Color(0xFF191919),
+                        fontSize: 32,
+                        fontFamily: 'DM Sans',
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -1.60,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: ingredients.isNotEmpty
-                          ? () => _navigateToConfirmation()
-                          : null,
-                      icon: const Icon(Icons.check),
-                      label: const Text("Generate Recipe"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Add ingredients you\'d like to include in your recipe',
+                      style: TextStyle(
+                        color: Color(0xFF666666),
+                        fontSize: 18,
+                        fontFamily: 'DM Sans',
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    // Ingredient Input
+                    Container(
+                      decoration: ShapeDecoration(
+                        color: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          side: const BorderSide(color: Color(0xFFCCCCCC)),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                       ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: ingredientController,
+                              focusNode: ingredientFocusNode,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontFamily: 'DM Sans',
+                                color: Color(0xFF191919),
+                              ),
+                              decoration: const InputDecoration(
+                                hintText: "Enter an ingredient",
+                                hintStyle: TextStyle(
+                                  color: Color(0xFF666666),
+                                  fontSize: 18,
+                                  fontFamily: 'DM Sans',
+                                ),
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                              ),
+                              onSubmitted: (value) => _addIngredient(value),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => _addIngredient(ingredientController.text),
+                            icon: const Icon(Icons.add_circle),
+                            color: const Color(0xFFF48600),
+                            iconSize: 32,
+                            padding: const EdgeInsets.all(12),
+                          ),
+                          IconButton(
+                            onPressed: () async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const CameraCaptureScreen(),
+                                ),
+                              );
+                              _handleCameraResult(result as List<String>?);
+                            },
+                            icon: const Icon(Icons.camera_alt),
+                            color: const Color(0xFFF48600),
+                            iconSize: 32,
+                            padding: const EdgeInsets.all(12),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 24),
+                    // Ingredients List
+                    ingredients.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.restaurant_menu,
+                                  size: 64,
+                                  color: Colors.grey[400],
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  "Add ingredients to create\nyour perfect recipe!",
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 18,
+                                    fontFamily: 'DM Sans',
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          )
+                        : Wrap(
+                            spacing: 12,
+                            runSpacing: 12,
+                            children: ingredients.asMap().entries.map((entry) {
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                                decoration: ShapeDecoration(
+                                  color: const Color(0xFFFFE3C1),
+                                  shape: RoundedRectangleBorder(
+                                    side: const BorderSide(
+                                      color: Color(0xFFF48600),
+                                    ),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      entry.value,
+                                      style: const TextStyle(
+                                        color: Color(0xFF191919),
+                                        fontSize: 18,
+                                        fontFamily: 'DM Sans',
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    GestureDetector(
+                                      onTap: () => _removeIngredient(entry.key),
+                                      child: const Icon(
+                                        Icons.cancel,
+                                        color: Color(0xFFF48600),
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                  ],
+                ),
               ),
-            ],
-          ),
+            ),
+
+            // Generate Recipe Button
+            Positioned(
+              left: 17,
+              bottom: 40,
+              right: 17,
+              child: ElevatedButton(
+                onPressed: ingredients.isNotEmpty ? _navigateToConfirmation : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF48600),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: const Text(
+                  '✨ Generate Recipe',
+                  style: TextStyle(
+                    color: Color(0xFF191919),
+                    fontSize: 18,
+                    fontFamily: 'DM Sans',
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -216,15 +281,27 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => ConfirmationScreen(
-          mealType: mealType,
-          dietaryPreferences: dietaryPreferences,
-          allergies: allergies,
-          cuisineType: cuisineType,
-          servingSize: servingSize,
+          mealType: widget.mealType,
+          dietaryPreferences: widget.dietaryPreferences,
+          allergies: widget.allergies,
+          cuisineType: widget.cuisineType,
+          servingSize: widget.servingSize,
           ingredients: ingredients,
-          targetCalories: targetCalories,
+          targetCalories: widget.targetCalories,
         ),
       ),
     );
+  }
+
+  void _handleCameraResult(List<String>? selectedIngredients) {
+    if (selectedIngredients != null) {
+      setState(() {
+        for (final ingredient in selectedIngredients) {
+          if (!ingredients.contains(ingredient)) {
+            ingredients.add(ingredient);
+          }
+        }
+      });
+    }
   }
 }

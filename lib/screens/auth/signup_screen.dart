@@ -502,7 +502,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
         if (success) {
           // Generate FCM token after successful signup
-          final notificationService = NotificationService();
+          final notificationService = Provider.of<NotificationService>(context, listen: false);
           await notificationService.getFCMToken();
           
           if (!mounted) return;

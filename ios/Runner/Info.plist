@@ -78,5 +78,9 @@
 	<string>We need to send you meal planning reminders</string>
 	<key>FirebaseAppDelegateProxyEnabled</key>
 	<false/>
+	<key>NSCameraUsageDescription</key>
+	<string>We need access to your camera to take photos of receipts</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need access to your camera and photo library to capture and select receipt images</string>
 </dict>
 </plist>

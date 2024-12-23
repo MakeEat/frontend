@@ -13,6 +13,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'services/notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'services/preferences_service.dart';
+import 'screens/recipe_details_screen.dart';
+import 'models/recipe.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -101,6 +103,15 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/home': (context) => const HomeScreen(),
         '/welcome': (context) => const WelcomeSlides(),
+      },
+      onGenerateRoute: (settings) {
+        if (settings.name == '/recipe-details') {
+          final recipe = settings.arguments as Recipe;
+          return MaterialPageRoute(
+            builder: (context) => RecipeDetailsScreen(recipe: recipe),
+          );
+        }
+        return null;
       },
     );
   }

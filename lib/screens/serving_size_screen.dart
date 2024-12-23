@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../utils/theme.dart';
 import 'calorie_settings_screen.dart';
 import 'ingredients_screen.dart';
 
@@ -29,151 +28,203 @@ class _ServingSizeScreenState extends State<ServingSizeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Serving Size"),
-        backgroundColor: AppColors.primary,
-      ),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFFAFAFA), Color(0xFFFFF4ED)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+        width: 430,
+        height: 932,
+        clipBehavior: Clip.antiAlias,
+        decoration: ShapeDecoration(
+          color: const Color(0xFFFFFAF5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
           ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              const Text(
-                "How many servings?",
-                style: AppTextStyles.heading,
-                textAlign: TextAlign.center,
+        child: Stack(
+          children: [
+            // Back Button
+            Positioned(
+              left: 16,
+              top: 54,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.pop(context),
               ),
-              const SizedBox(height: 8),
-              Text(
-                "Select or adjust the number of servings",
-                style: AppTextStyles.body.copyWith(
-                  color: Colors.grey[600],
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 40),
-              // Quick selection buttons
-              Wrap(
-                spacing: 16,
-                runSpacing: 16,
-                alignment: WrapAlignment.center,
-                children: quickSelections.map((size) => 
-                  _buildQuickSelectButton(size)
-                ).toList(),
-              ),
-              const SizedBox(height: 40),
-              // Custom serving size selector
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      if (servingSize > 1) {
-                        setState(() => servingSize--);
-                      }
-                    },
-                    icon: const Icon(Icons.remove_circle_outline),
-                    color: AppColors.primary,
-                    iconSize: 32,
-                  ),
-                  Container(
-                    width: 100,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.primary),
-                    ),
-                    child: Text(
-                      servingSize.toString(),
-                      style: AppTextStyles.body.copyWith(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      if (servingSize < 20) {
-                        setState(() => servingSize++);
-                      }
-                    },
-                    icon: const Icon(Icons.add_circle_outline),
-                    color: AppColors.primary,
-                    iconSize: 32,
-                  ),
-                ],
-              ),
-              const Spacer(),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.arrow_back),
-                      label: const Text("Back"),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.primary,
-                        side: const BorderSide(color: AppColors.primary),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: _navigateToCalorieSettings,
-                      icon: const Icon(Icons.arrow_forward),
-                      label: const Text("Next"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+            ),
+            
+            // Progress Indicator
+            Positioned(
+              left: 16,
+              top: 94,
+              child: SizedBox(
+                width: 398,
+                child: Row(
+                  children: List.generate(5, (index) {
+                    return Expanded(
+                      child: Container(
+                        height: 12,
+                        margin: EdgeInsets.only(right: index < 4 ? 6 : 0),
+                        decoration: ShapeDecoration(
+                          color: index < 4 
+                              ? const Color(0xFF33985B) 
+                              : const Color(0xFFE6E6E6),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
                         ),
                       ),
+                    );
+                  }),
+                ),
+              ),
+            ),
+
+            // Main Content
+            Positioned(
+              left: 16,
+              top: 130,
+              right: 16,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'How many servings?',
+                    style: TextStyle(
+                      color: Color(0xFF191919),
+                      fontSize: 32,
+                      fontFamily: 'DM Sans',
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -1.60,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Select or adjust the number of servings',
+                    style: TextStyle(
+                      color: Color(0xFF666666),
+                      fontSize: 18,
+                      fontFamily: 'DM Sans',
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  // Quick Selection Buttons
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: quickSelections.map((size) {
+                      final isSelected = servingSize == size;
+                      return GestureDetector(
+                        onTap: () => setState(() => servingSize = size),
+                        child: Container(
+                          width: 107,
+                          height: 57,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          decoration: ShapeDecoration(
+                            color: isSelected ? const Color(0xFFFFE3C1) : Colors.white,
+                            shape: RoundedRectangleBorder(
+                              side: BorderSide(
+                                width: 1,
+                                color: isSelected ? const Color(0xFFF48600) : const Color(0xFFCCCCCC),
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              "$size ${size == 1 ? 'serving' : 'servings'}",
+                              style: TextStyle(
+                                color: const Color(0xFF191919),
+                                fontSize: 18,
+                                fontFamily: 'DM Sans',
+                                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 32),
+                  // Custom Serving Size Selector
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: ShapeDecoration(
+                      color: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        side: const BorderSide(color: Color(0xFFCCCCCC)),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            if (servingSize > 1) {
+                              setState(() => servingSize--);
+                            }
+                          },
+                          icon: const Icon(Icons.remove_circle_outline),
+                          color: const Color(0xFFF48600),
+                          iconSize: 32,
+                        ),
+                        const SizedBox(width: 16),
+                        Text(
+                          servingSize.toString(),
+                          style: const TextStyle(
+                            color: Color(0xFF191919),
+                            fontSize: 24,
+                            fontFamily: 'DM Sans',
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        IconButton(
+                          onPressed: () {
+                            if (servingSize < 20) {
+                              setState(() => servingSize++);
+                            }
+                          },
+                          icon: const Icon(Icons.add_circle_outline),
+                          color: const Color(0xFFF48600),
+                          iconSize: 32,
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+            ),
 
-  Widget _buildQuickSelectButton(int size) {
-    final isSelected = servingSize == size;
-    return ElevatedButton(
-      onPressed: () => setState(() => servingSize = size),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: isSelected ? AppColors.primary : Colors.white,
-        foregroundColor: isSelected ? Colors.white : AppColors.primary,
-        elevation: isSelected ? 8 : 2,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: BorderSide(
-            color: AppColors.primary,
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-      ),
-      child: Text(
-        "$size ${size == 1 ? 'serving' : 'servings'}",
-        style: TextStyle(
-          color: isSelected ? Colors.white : AppColors.primary,
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            // Continue Button
+            Positioned(
+              left: 17,
+              bottom: 40,
+              child: SizedBox(
+                width: 397,
+                height: 57,
+                child: ElevatedButton(
+                  onPressed: _navigateToCalorieSettings,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF48600),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: const Text(
+                    'Continue',
+                    style: TextStyle(
+                      color: Color(0xFF191919),
+                      fontSize: 18,
+                      fontFamily: 'DM Sans',
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
