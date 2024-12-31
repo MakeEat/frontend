@@ -1,16 +1,33 @@
-# makeeat
+# 🍳 MakeEat - AI-Powered Recipe Generator
 
-A new Flutter project.
+<div align="center">
+  <img src="assets/images/makeeat_logo.png" alt="MakeEat Logo" width="200"/>
+  <p><em>Transform your ingredients into delicious meals with AI</em></p>
+</div>
 
-## Getting Started
+## ✨ Features
 
-This project is a starting point for a Flutter application.
+- 🤖 **AI-Powered Recipe Generation**: Personalized recipes based on your ingredients and preferences
+- 📸 **Receipt Scanning**: Extract ingredients from grocery receipts
+- 🥗 **Dietary Preferences**: Comprehensive management of allergies and dietary restrictions
+- 📊 **Nutritional Tracking**: Detailed nutritional information for each recipe
+- ❤️ **Favorites System**: Save and access your favorite recipes offline
+- 🎨 **Modern UI/UX**: Sleek, intuitive interface with smooth animations
 
-A few resources to get you started if this is your first Flutter project:
+## 🛠️ Tech Stack
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- **Frontend Framework**: Flutter/Dart
+- **State Management**: Provider
+- **Backend Integration**: Firebase
+- **Authentication**: Firebase Auth
+- **Database**: Cloud Firestore
+- **APIs**: OpenAI GPT, FatSecret Nutrition API
+- **Storage**: SharedPreferences for local data
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 📱 Screenshots
+
+[Add your app screenshots here]
+
+## 🚀 Getting Started
+
+1. Clone the repository
