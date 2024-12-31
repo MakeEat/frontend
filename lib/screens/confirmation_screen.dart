@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'recipe_display_screen.dart';
 import '../models/recipe.dart';
 import 'package:provider/provider.dart';
@@ -100,9 +99,18 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> with SingleTick
     try {
       setState(() => isLoading = true);
       
-      // Take only first 2 items from each list to reduce token count
-      final limitedPreferences = combinedPreferences.take(2).toList();
-      final limitedAllergies = combinedAllergies.take(2).toList();
+      // Debug print to see what we're sending
+      final requestBody = {
+        'meal_type': widget.mealType.toLowerCase(), // Make sure it's lowercase
+        'cuisine_type': widget.cuisineType.toLowerCase(), // Make sure it's lowercase
+        'dietary_restrictions': combinedPreferences.map((e) => e.toLowerCase()).toList(),
+        'allergies': combinedAllergies.map((e) => e.toLowerCase()).toList(),
+        'servings': int.parse(widget.servingSize),
+        'calorie_limit': (widget.targetCalories ~/ int.parse(widget.servingSize)),
+        'ingredients': widget.ingredients.map((e) => e.toLowerCase()).toList(),
+      };
+      
+      print('Sending request: ${jsonEncode(requestBody)}'); // Debug print
 
       final response = await http.post(
         Uri.parse('http://54.173.54.132:8010/api/recipe/generate'),
@@ -110,30 +118,23 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> with SingleTick
           'Content-Type': 'application/json',
           'Authorization': 'Bearer 9357',
         },
-        body: jsonEncode({
-          'meal_type': widget.mealType,
-          'cuisine_type': widget.cuisineType,
-          'dietary_restrictions': limitedPreferences, // Use combined preferences
-          'allergies': limitedAllergies, // Use combined allergies
-          'servings': int.parse(widget.servingSize),
-          'calorie_limit': widget.targetCalories,
-          'ingredients': widget.ingredients,
-          'additional_preferences': {
-            'dislikes': excludedIngredients, // Use excluded ingredients
-          },
-        }),
+        body: jsonEncode(requestBody),
       );
 
+      // Debug print response
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
       if (!mounted) return;
-      
-      if (response.statusCode == 200 || response.statusCode == 201) {  // Accept both 200 and 201
+      setState(() => isLoading = false);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
-        
-        // The recipe data is directly in the response, no need to parse message content
-        final recipeData = data['data'];
-        
-        if (mounted) {
-          Navigator.push(
+        if (data['success'] == true && data['data'] != null) {
+          final recipeData = data['data'];
+          
+          if (!mounted) return;
+          Navigator.pushReplacement(
             context,
             MaterialPageRoute(
               builder: (context) => RecipeDisplayScreen(
@@ -141,21 +142,24 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> with SingleTick
               ),
             ),
           );
+        } else {
+          throw Exception(data['error']?['message'] ?? 'Failed to generate recipe');
         }
       } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: ${response.statusCode} - ${response.body}'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error']?['message'] ?? 'Failed to generate recipe');
       }
     } catch (e) {
       if (!mounted) return;
+      setState(() => isLoading = false);
+      
+      // Show more detailed error message
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to generate recipe. Please try again.')),
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
       );
     }
   }
@@ -299,6 +303,29 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> with SingleTick
   }
 
   Widget _buildSection(String title, String content) {
+    if (title == 'Dietary Preferences' && combinedPreferences.length > 1) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(content),
+          const Text(
+            '* Only primary preference will be used for recipe generation',
+            style: TextStyle(
+              color: Colors.orange,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+      );
+    }
     return Container(
       margin: const EdgeInsets.only(bottom: 24),
       child: Column(

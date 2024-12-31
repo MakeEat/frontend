@@ -26,15 +26,17 @@ class CalorieSettingsScreen extends StatefulWidget {
 }
 
 class _CalorieSettingsScreenState extends State<CalorieSettingsScreen> {
-  late TextEditingController _caloriesController;
-  final List<int> _presetCalories = const [1200, 1500, 1800, 2000, 2200, 2500];
+  late double _currentCalories;
+  final double _minCalories = 500;
+  final double _maxCalories = 3000;
+  final double _step = 100;
 
   @override
   void initState() {
     super.initState();
-    _caloriesController = TextEditingController(
-      text: widget.initialCalories > 0 ? widget.initialCalories.toString() : '',
-    );
+    _currentCalories = widget.initialCalories > 0 
+        ? widget.initialCalories.toDouble() 
+        : 2000;
   }
 
   @override
@@ -98,7 +100,7 @@ class _CalorieSettingsScreenState extends State<CalorieSettingsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Set target calories',
+                    'Set total calories',
                     style: TextStyle(
                       color: Color(0xFF191919),
                       fontSize: 32,
@@ -107,10 +109,20 @@ class _CalorieSettingsScreenState extends State<CalorieSettingsScreen> {
                       letterSpacing: -1.60,
                     ),
                   ),
-                  const SizedBox(height: 32),
-                  // Custom Calorie Input
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Target calories for each serving',
+                    style: TextStyle(
+                      color: Color(0xFF666666),
+                      fontSize: 16,
+                      fontFamily: 'DM Sans',
+                    ),
+                  ),
+                  
+                  // Calories Display
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(24),
                     decoration: ShapeDecoration(
                       color: Colors.white,
                       shape: RoundedRectangleBorder(
@@ -118,70 +130,84 @@ class _CalorieSettingsScreenState extends State<CalorieSettingsScreen> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: TextField(
-                      controller: _caloriesController,
-                      keyboardType: TextInputType.number,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontFamily: 'DM Sans',
-                        color: Color(0xFF191919),
-                      ),
-                      decoration: const InputDecoration(
-                        hintText: 'Enter calories',
-                        border: InputBorder.none,
-                        hintStyle: TextStyle(
-                          color: Color(0xFF666666),
-                          fontSize: 18,
-                          fontFamily: 'DM Sans',
+                    child: Column(
+                      children: [
+                        Text(
+                          '${_currentCalories.toInt()}',
+                          style: const TextStyle(
+                            color: Color(0xFFF48600),
+                            fontSize: 48,
+                            fontFamily: 'DM Sans',
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      ),
+                        const Text(
+                          'calories',
+                          style: TextStyle(
+                            color: Color(0xFF666666),
+                            fontSize: 18,
+                            fontFamily: 'DM Sans',
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+                  
                   const SizedBox(height: 32),
-                  // Preset Options
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: _presetCalories.map((calories) {
-                      final isSelected = _caloriesController.text == calories.toString();
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _caloriesController.text = calories.toString();
-                          });
-                        },
-                        child: Container(
-                          width: 107,
-                          height: 57,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                          decoration: ShapeDecoration(
-                            color: isSelected ? const Color(0xFFFFE3C1) : Colors.white,
-                            shape: RoundedRectangleBorder(
-                              side: BorderSide(
-                                width: 1,
-                                color: isSelected ? const Color(0xFFF48600) : const Color(0xFFCCCCCC),
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          child: Center(
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                '$calories cal',
-                                style: TextStyle(
-                                  color: const Color(0xFF191919),
-                                  fontSize: 18,
-                                  fontFamily: 'DM Sans',
-                                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
+                  
+                  // Slider
+                  SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      activeTrackColor: const Color(0xFFF48600),
+                      inactiveTrackColor: const Color(0xFFFFE3C1),
+                      thumbColor: const Color(0xFFF48600),
+                      overlayColor: const Color(0xFFF48600).withOpacity(0.2),
+                      trackHeight: 8,
+                      thumbShape: const RoundSliderThumbShape(
+                        enabledThumbRadius: 12,
+                      ),
+                      overlayShape: const RoundSliderOverlayShape(
+                        overlayRadius: 24,
+                      ),
+                    ),
+                    child: Slider(
+                      value: _currentCalories,
+                      min: _minCalories,
+                      max: _maxCalories,
+                      divisions: ((_maxCalories - _minCalories) ~/ _step),
+                      onChanged: (value) {
+                        setState(() {
+                          _currentCalories = value - (value % _step);
+                        });
+                      },
+                    ),
+                  ),
+                  
+                  // Min/Max Labels
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${_minCalories.toInt()} cal',
+                          style: const TextStyle(
+                            color: Color(0xFF666666),
+                            fontSize: 14,
+                            fontFamily: 'DM Sans',
                           ),
                         ),
-                      );
-                    }).toList(),
+                        Text(
+                          '${_maxCalories.toInt()} cal',
+                          style: const TextStyle(
+                            color: Color(0xFF666666),
+                            fontSize: 14,
+                            fontFamily: 'DM Sans',
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -222,26 +248,11 @@ class _CalorieSettingsScreenState extends State<CalorieSettingsScreen> {
   }
 
   void _saveAndNavigateToNext() {
-    final totalCalories = int.tryParse(_caloriesController.text) ?? 0;
-    final servingSize = int.tryParse(widget.servingSize) ?? 1;
-    final caloriesPerServing = totalCalories ~/ servingSize; // Integer division
+    final caloriesPerServing = _currentCalories.toInt();
 
     if (caloriesPerServing > 0) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => IngredientsScreen(
-            mealType: widget.mealType,
-            dietaryPreferences: widget.dietaryPreferences,
-            allergies: widget.allergies,
-            cuisineType: widget.cuisineType,
-            servingSize: widget.servingSize,
-            targetCalories: caloriesPerServing,
-          ),
-        ),
-      );
+      widget.onCaloriesSelected(caloriesPerServing);
     } else {
-      // Show error if calories not set
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter a valid calorie target'),
@@ -249,11 +260,5 @@ class _CalorieSettingsScreenState extends State<CalorieSettingsScreen> {
         ),
       );
     }
-  }
-
-  @override
-  void dispose() {
-    _caloriesController.dispose();
-    super.dispose();
   }
 }

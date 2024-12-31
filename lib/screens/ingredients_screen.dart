@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import '../services/receipt_analysis_service.dart';
+import 'ingredient_selection_screen.dart';
 import 'confirmation_screen.dart';
-import 'camera_capture_screen.dart';
 
 class IngredientsScreen extends StatefulWidget {
   final String mealType;
@@ -27,10 +30,11 @@ class IngredientsScreen extends StatefulWidget {
 }
 
 class _IngredientsScreenState extends State<IngredientsScreen> {
-  static const int maxIngredients = 3;
-  late List<String> ingredients;
   final TextEditingController ingredientController = TextEditingController();
   final FocusNode ingredientFocusNode = FocusNode();
+  final ImagePicker _picker = ImagePicker();
+  final ReceiptAnalysisService _receiptAnalysisService = ReceiptAnalysisService();
+  List<String> ingredients = [];
   bool isLoading = false;
 
   @override
@@ -39,17 +43,145 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
     ingredients = widget.existingIngredients?.toList() ?? [];
   }
 
+  void _showImageOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt, color: Color(0xFFF48600)),
+                title: const Text(
+                  'Take Photo',
+                  style: TextStyle(
+                    fontFamily: 'DM Sans',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final XFile? photo = await _picker.pickImage(
+                    source: ImageSource.camera,
+                    imageQuality: 85,
+                  );
+                  if (photo != null) {
+                    await _processImage(File(photo.path));
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library, color: Color(0xFFF48600)),
+                title: const Text(
+                  'Choose from Gallery',
+                  style: TextStyle(
+                    fontFamily: 'DM Sans',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final XFile? image = await _picker.pickImage(
+                    source: ImageSource.gallery,
+                    imageQuality: 85,
+                  );
+                  if (image != null) {
+                    await _processImage(File(image.path));
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _processImage(File imageFile) async {
+    try {
+      setState(() => isLoading = true);
+      final ingredients = await _receiptAnalysisService.analyzeReceipt(imageFile);
+      
+      if (!mounted) return;
+      
+      setState(() => isLoading = false);
+      
+      final selectedIngredients = await Navigator.push<List<String>>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => IngredientSelectionScreen(
+            detectedIngredients: ingredients,
+          ),
+        ),
+      );
+
+      if (selectedIngredients != null && mounted) {
+        setState(() {
+          this.ingredients.addAll(selectedIngredients);
+        });
+      }
+    } catch (e) {
+      setState(() => isLoading = false);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error processing image: $e')),
+      );
+    }
+  }
+
+  void _addIngredient(String ingredient) {
+    final trimmed = ingredient.trim();
+    if (trimmed.isNotEmpty && !ingredients.contains(trimmed)) {
+      setState(() {
+        ingredients.add(trimmed);
+        ingredientController.clear();
+      });
+      ingredientFocusNode.requestFocus();
+    }
+  }
+
+  void _removeIngredient(int index) {
+    setState(() {
+      ingredients.removeAt(index);
+    });
+  }
+
+  void _navigateToConfirmation() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ConfirmationScreen(
+          mealType: widget.mealType,
+          dietaryPreferences: widget.dietaryPreferences,
+          allergies: widget.allergies,
+          cuisineType: widget.cuisineType,
+          servingSize: widget.servingSize,
+          ingredients: ingredients,
+          targetCalories: widget.targetCalories,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFFAF5), Color(0xFFFFE3C1)],
+        clipBehavior: Clip.antiAlias,
+        decoration: ShapeDecoration(
+          color: const Color(0xFFFFFAF5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
           ),
         ),
         child: Stack(
@@ -67,9 +199,9 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
             // Main Content
             Positioned(
               left: 16,
-              top: 130,
               right: 16,
-              bottom: 100,
+              top: 100,
+              bottom: 90,
               child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,7 +232,6 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
                       decoration: ShapeDecoration(
                         color: Colors.white,
                         shape: RoundedRectangleBorder(
-                          side: const BorderSide(color: Color(0xFFCCCCCC)),
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
@@ -110,22 +241,12 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
                             child: TextField(
                               controller: ingredientController,
                               focusNode: ingredientFocusNode,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontFamily: 'DM Sans',
-                                color: Color(0xFF191919),
-                              ),
                               decoration: const InputDecoration(
-                                hintText: "Enter an ingredient",
-                                hintStyle: TextStyle(
-                                  color: Color(0xFF666666),
-                                  fontSize: 18,
-                                  fontFamily: 'DM Sans',
-                                ),
+                                hintText: 'Enter an ingredient',
                                 border: InputBorder.none,
                                 contentPadding: EdgeInsets.symmetric(horizontal: 16),
                               ),
-                              onSubmitted: (value) => _addIngredient(value),
+                              onSubmitted: _addIngredient,
                             ),
                           ),
                           IconButton(
@@ -133,22 +254,14 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
                             icon: const Icon(Icons.add_circle),
                             color: const Color(0xFFF48600),
                             iconSize: 32,
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
                           ),
                           IconButton(
-                            onPressed: () async {
-                              final result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const CameraCaptureScreen(),
-                                ),
-                              );
-                              _handleCameraResult(result as List<String>?);
-                            },
-                            icon: const Icon(Icons.camera_alt),
+                            onPressed: _showImageOptions,
+                            icon: const Icon(Icons.arrow_circle_right),
                             color: const Color(0xFFF48600),
                             iconSize: 32,
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
                           ),
                         ],
                       ),
@@ -230,9 +343,9 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
 
             // Generate Recipe Button
             Positioned(
-              left: 17,
+              left: 16,
+              right: 16,
               bottom: 40,
-              right: 17,
               child: ElevatedButton(
                 onPressed: ingredients.isNotEmpty ? _navigateToConfirmation : null,
                 style: ElevatedButton.styleFrom(
@@ -253,55 +366,21 @@ class _IngredientsScreenState extends State<IngredientsScreen> {
                 ),
               ),
             ),
+
+            if (isLoading)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black.withOpacity(0.5),
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFF48600)),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
     );
-  }
-
-  void _addIngredient(String ingredient) {
-    final trimmed = ingredient.trim();
-    if (trimmed.isNotEmpty && !ingredients.contains(trimmed)) {
-      setState(() {
-        ingredients.add(trimmed);
-        ingredientController.clear();
-      });
-      ingredientFocusNode.requestFocus();
-    }
-  }
-
-  void _removeIngredient(int index) {
-    setState(() {
-      ingredients.removeAt(index);
-    });
-  }
-
-  void _navigateToConfirmation() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ConfirmationScreen(
-          mealType: widget.mealType,
-          dietaryPreferences: widget.dietaryPreferences,
-          allergies: widget.allergies,
-          cuisineType: widget.cuisineType,
-          servingSize: widget.servingSize,
-          ingredients: ingredients,
-          targetCalories: widget.targetCalories,
-        ),
-      ),
-    );
-  }
-
-  void _handleCameraResult(List<String>? selectedIngredients) {
-    if (selectedIngredients != null) {
-      setState(() {
-        for (final ingredient in selectedIngredients) {
-          if (!ingredients.contains(ingredient)) {
-            ingredients.add(ingredient);
-          }
-        }
-      });
-    }
   }
 }

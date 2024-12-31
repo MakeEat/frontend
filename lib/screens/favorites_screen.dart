@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/favorites_service.dart';
 import '../models/recipe.dart';
 import '../widgets/recipe_placeholder.dart';
+import './recipe_display_screen.dart';
 
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
@@ -86,10 +87,13 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                           },
                           child: GestureDetector(
                             onTap: () {
-                              Navigator.pushNamed(
+                              Navigator.push(
                                 context,
-                                '/recipe-details',
-                                arguments: recipe,
+                                MaterialPageRoute(
+                                  builder: (context) => RecipeDisplayScreen(
+                                    recipe: recipe,
+                                  ),
+                                ),
                               );
                             },
                             child: SizedBox(
@@ -370,6 +374,107 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     return const RecipePlaceholderImage(
       width: 160,
       height: 160,
+    );
+  }
+
+  Widget _buildNutritionalInfo(Recipe recipe) {
+    final nutritionFacts = recipe.nutritionFacts;
+    
+    final caloriesPerServing = nutritionFacts['calories'] ?? 0;
+    final proteinPerServing = nutritionFacts['protein'] ?? 0;
+    final carbsPerServing = nutritionFacts['carbs'] ?? 0;
+    final fatPerServing = nutritionFacts['fat'] ?? 0;
+    final fiberPerServing = nutritionFacts['fiber'] ?? 0;
+    final sugarPerServing = nutritionFacts['sugar'] ?? 0;
+    final sodiumPerServing = nutritionFacts['sodium'] ?? 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 24),
+        const Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            Text(
+              'Nutritional Information',
+              style: TextStyle(
+                color: Color(0xFF191919),
+                fontSize: 24,
+                fontFamily: 'DM Sans',
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            Text(
+              '(total calories)',
+              style: TextStyle(
+                color: Color(0xFF666666),
+                fontSize: 16,
+                fontFamily: 'DM Sans',
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _buildNutritionCard('Calories', '$caloriesPerServing', 'kcal'),
+              const SizedBox(width: 8),
+              _buildNutritionCard('Protein', '$proteinPerServing', 'g'),
+              const SizedBox(width: 8),
+              _buildNutritionCard('Carbs', '$carbsPerServing', 'g'),
+              const SizedBox(width: 8),
+              _buildNutritionCard('Fat', '$fatPerServing', 'g'),
+              const SizedBox(width: 8),
+              _buildNutritionCard('Fiber', '$fiberPerServing', 'g'),
+              const SizedBox(width: 8),
+              _buildNutritionCard('Sugar', '$sugarPerServing', 'g'),
+              const SizedBox(width: 8),
+              _buildNutritionCard('Sodium', '$sodiumPerServing', 'mg'),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNutritionCard(String label, String value, String unit) {
+    return Container(
+      margin: const EdgeInsets.only(right: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: ShapeDecoration(
+        color: Colors.white,
+        shape: RoundedRectangleBorder(
+          side: const BorderSide(color: Color(0xFFCCCCCC)),
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF666666),
+              fontSize: 14,
+              fontFamily: 'DM Sans',
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '$value$unit',
+            style: const TextStyle(
+              color: Color(0xFFF48600),
+              fontSize: 16,
+              fontFamily: 'DM Sans',
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
     );
   }
 } 

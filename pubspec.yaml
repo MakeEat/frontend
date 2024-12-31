@@ -37,6 +37,7 @@ dependencies:
   google_sign_in_ios: ^5.7.8
   flutter_svg: ^2.0.16
   google_sign_in_android: ^6.1.33
+  flutter_speed_dial: ^7.0.0
   image_picker: ^1.1.2
   camera: ^0.11.0+2
   firebase_messaging: ^15.1.5

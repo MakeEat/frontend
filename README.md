@@ -1,16 +1,71 @@
-# makeeat
+# 🍳 MakeEat - AI-Powered Recipe Generator
 
-A new Flutter project.
+<div align="center">
+  <p><em>Transform your ingredients into delicious meals with AI-powered recipe generation</em></p>
+</div>
 
-## Getting Started
+## ✨ Key Features
 
-This project is a starting point for a Flutter application.
+- 🤖 **Smart Recipe Generation**: Leverages OpenAI's GPT for personalized recipe creation based on available ingredients
+- 📸 **Receipt Scanner**: Advanced OCR technology to extract ingredients from grocery receipts
+- 🎨 **Intuitive UI**: Custom-designed gradient interfaces with DM Sans typography
+- 🔄 **Real-time Updates**: Seamless Firebase integration for instant recipe synchronization
+- 📱 **Cross-platform**: Built with Flutter for both iOS and Android compatibility
+- 💾 **Offline Support**: Local storage implementation for favorite recipes
 
-A few resources to get you started if this is your first Flutter project:
+## 🛠️ Technical Stack
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### Frontend
+- **Framework**: Flutter 3.0+ with Dart
+- **State Management**: Provider 6.1.2
+- **UI Components**: Custom widgets with Material Design
+- **Image Processing**: Image Gallery Saver & Permission Handler
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### Backend & Services
+- **Authentication**: Firebase Auth 5.3.3
+- **Database**: Cloud Firestore 5.5.0
+- **API Integration**: OpenAI for recipe generation
+- **Storage**: SharedPreferences & Path Provider
+- **Analytics**: Firebase Core 3.8.0
+
+## 📱 Screenshots & Demo
+
+<div align="center">
+  <table>
+    <tr>
+      <td><img src="assets/screenshots/screenshot1.jpeg" width="200" alt="Recipe Generation"/></td>
+      <td><img src="assets/screenshots/screenshot2.jpeg" width="200" alt="Recipe Details"/></td>
+    </tr>
+  </table>
+  
+  <h4>App Demo</h4>
+  <a href="assets/screenshots/screenrecord.mp4">Watch Demo Video</a>
+</div>
+
+## 🚀 Getting Started
+
+1. **Clone the repository**  
+   ```bash
+   git clone https://github.com/MakeEat/frontend.git
+   ```
+
+2. **Install dependencies**
+   ```bash
+   flutter pub get
+   ```
+
+3. **Configure environment variables**
+   ```bash
+   cp .env.example .env
+   ```
+   Required variables:
+   - OPENAI_API_KEY
+   - FIREBASE_CONFIG
+   - FATSECRET_API_KEY
+
+4. **Run the app**
+   ```bash
+   flutter run
+   ```
+
+## 🏗️ Project Structure

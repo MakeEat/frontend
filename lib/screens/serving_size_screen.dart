@@ -241,7 +241,7 @@ class _ServingSizeScreenState extends State<ServingSizeScreen> {
           cuisineType: widget.cuisineType,
           servingSize: servingSize.toString(),
           initialCalories: 2000,
-          onCaloriesSelected: (calories) {
+          onCaloriesSelected: (totalCalories) {
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -251,7 +251,7 @@ class _ServingSizeScreenState extends State<ServingSizeScreen> {
                   allergies: widget.allergies,
                   cuisineType: widget.cuisineType,
                   servingSize: servingSize.toString(),
-                  targetCalories: calories,
+                  targetCalories: totalCalories,
                 ),
               ),
             );

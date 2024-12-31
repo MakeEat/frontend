@@ -193,6 +193,13 @@ class _RecipeDisplayScreenState extends State<RecipeDisplayScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Calculate per-serving nutritional values
+    final servings = widget.recipe.servings;
+    final nutritionFacts = widget.recipe.nutritionFacts;
+    final caloriesPerServing = (nutritionFacts['calories'] ?? 0) ~/ servings;
+    final proteinPerServing = (nutritionFacts['protein'] ?? 0) ~/ servings;
+    final carbsPerServing = (nutritionFacts['carbs'] ?? 0) ~/ servings;
+
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -514,31 +521,64 @@ class _RecipeDisplayScreenState extends State<RecipeDisplayScreen> {
   }
 
   Widget _buildNutritionalInfo() {
+    // Get nutritional values from nutritionFacts map
+    final nutritionFacts = widget.recipe.nutritionFacts;
+    
+    // Calculate per-serving values with null safety
+    final caloriesPerServing = nutritionFacts['calories'] ?? 0;
+    final proteinPerServing = nutritionFacts['protein'] ?? 0;
+    final carbsPerServing = nutritionFacts['carbs'] ?? 0;
+    final fatPerServing = nutritionFacts['fat'] ?? 0;
+    final fiberPerServing = nutritionFacts['fiber'] ?? 0;
+    final sugarPerServing = nutritionFacts['sugar'] ?? 0;
+    final sodiumPerServing = nutritionFacts['sodium'] ?? 0;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 24),
-        const Text(
-          'Nutritional Information',
-          style: TextStyle(
-            color: Color(0xFF191919),
-            fontSize: 24,
-            fontFamily: 'DM Sans',
-            fontWeight: FontWeight.w700,
-          ),
+        const Wrap(
+          spacing: 8, // Horizontal spacing between items
+          runSpacing: 8, // Vertical spacing between rows
+          children: [
+            Text(
+              'Nutritional Information',
+              style: TextStyle(
+                color: Color(0xFF191919),
+                fontSize: 24,
+                fontFamily: 'DM Sans',
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            Text(
+              '(total calories)',
+              style: TextStyle(
+                color: Color(0xFF666666),
+                fontSize: 16,
+                fontFamily: 'DM Sans',
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
-              _buildNutritionCard('Calories', '${widget.recipe.nutritionFacts['calories']}', 'kcal'),
-              _buildNutritionCard('Protein', '${widget.recipe.nutritionFacts['protein']}', 'g'),
-              _buildNutritionCard('Carbs', '${widget.recipe.nutritionFacts['carbs']}', 'g'),
-              _buildNutritionCard('Fat', '${widget.recipe.nutritionFacts['fat']}', 'g'),
-              _buildNutritionCard('Fiber', '${widget.recipe.nutritionFacts['fiber']}', 'g'),
-              _buildNutritionCard('Sugar', '${widget.recipe.nutritionFacts['sugar']}', 'g'),
-              _buildNutritionCard('Sodium', '${widget.recipe.nutritionFacts['sodium']}', 'mg'),
+              _buildNutritionCard('Calories', '$caloriesPerServing', 'kcal'),
+              const SizedBox(width: 8), // Add consistent spacing
+              _buildNutritionCard('Protein', '$proteinPerServing', 'g'),
+              const SizedBox(width: 8),
+              _buildNutritionCard('Carbs', '$carbsPerServing', 'g'),
+              const SizedBox(width: 8),
+              _buildNutritionCard('Fat', '$fatPerServing', 'g'),
+              const SizedBox(width: 8),
+              _buildNutritionCard('Fiber', '$fiberPerServing', 'g'),
+              const SizedBox(width: 8),
+              _buildNutritionCard('Sugar', '$sugarPerServing', 'g'),
+              const SizedBox(width: 8),
+              _buildNutritionCard('Sodium', '$sodiumPerServing', 'mg'),
             ],
           ),
         ),
